@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 public class JdbcChannelDao implements ChannelDao {
@@ -49,5 +48,11 @@ public class JdbcChannelDao implements ChannelDao {
     public List<Channel> getChannelsByProductId(String productId) {
         String selectChannelsSql = "SELECT c.id, c.name FROM public.channel c JOIN public.product_channel pc ON c.id = pc.channel_id WHERE pc.product_id = ?";
         return jdbcTemplate.query(selectChannelsSql, new BeanPropertyRowMapper<>(Channel.class), productId);
+    }
+
+    @Override
+    public void deleteByProductId(String productId){
+        String sql = "DELETE FROM public.product_channel WHERE product_id = ?";
+        jdbcTemplate.update(sql, productId);
     }
 }

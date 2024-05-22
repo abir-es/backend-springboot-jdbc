@@ -6,4 +6,5 @@ public interface PriceDao {
     Integer savePrice(String offeringPriceId, Price price);
     void updatePrice(Price price);
     Price findByProductOfferingPriceId(String productOfferingPriceId);
+    void deleteById(int id);
 }

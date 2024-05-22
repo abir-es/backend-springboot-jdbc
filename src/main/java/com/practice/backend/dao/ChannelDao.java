@@ -8,4 +8,5 @@ public interface ChannelDao {
     void saveChannels(String productId, List<Channel> channels);
     void updateChannels(String productId, List<Channel> channels);
     List<Channel> getChannelsByProductId(String productId);
+    void deleteByProductId(String productId);
 }

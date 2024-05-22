@@ -6,4 +6,5 @@ public interface DutyFreeAmountDao {
     void saveDutyFreeAmount(DutyFreeAmount dutyFreeAmount);
     void updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount);
     DutyFreeAmount findByPriceId(int priceId);
+    void deleteByPriceId(int priceId);
 }

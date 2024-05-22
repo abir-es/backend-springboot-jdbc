@@ -33,4 +33,10 @@ public class JdbcDutyFreeAmountDao implements DutyFreeAmountDao {
         String selectDutyFreeAmountSql = "SELECT * FROM public.duty_free_amount WHERE price_id = ?";
         return jdbcTemplate.queryForObject(selectDutyFreeAmountSql, new BeanPropertyRowMapper<>(DutyFreeAmount.class), priceId);
     }
+
+    @Override
+    public void deleteByPriceId(int priceId) {
+        String sql = "DELETE FROM public.duty_free_amount WHERE price_id = ?";
+        jdbcTemplate.update(sql, priceId);
+    }
 }
