@@ -1,8 +1,7 @@
 package com.practice.backend.service.impl;
 
 import com.practice.backend.dao.*;
-import com.practice.backend.entity.Product;
-import com.practice.backend.entity.ProductOfferingPrice;
+import com.practice.backend.entity.*;
 import com.practice.backend.service.ProductService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,18 +81,77 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Saving product: {}", product);
 
+        Product existingProduct = productDao.findById(product.getId());
         String productId = product.getId();
 
-        productDao.save(product);
-        if (product.getChannel() != null) channelDao.saveChannels(productId, product.getChannel());
-        if (product.getProductOfferingRelationship() != null) productOfferingRelationshipDao.saveProductOfferingRelationships(productId, product.getProductOfferingRelationship());
+        if (existingProduct == null) {
+            productDao.save(product);
+        } else {
+            productDao.update(product);
+        }
 
-        if (product.getProductOfferingPrice() != null){
-            productOfferingPriceDao.saveProductOfferingPrices(productId, product.getProductOfferingPrice());
+        if (product.getChannel() != null) channelDao.updateChannels(productId, product.getChannel());
+        if (product.getProductOfferingRelationship() != null) productOfferingRelationshipDao.updateProductOfferingRelationships(productId, product.getProductOfferingRelationship());;
 
-            for (ProductOfferingPrice offeringPrice : product.getProductOfferingPrice()){
-                int priceId = priceDao.savePrice(offeringPrice.getId(), offeringPrice.getPrice());
-                //TODO complete the save method...
+        if (product.getProductOfferingPrice() != null) {
+            productOfferingPriceDao.updateProductOfferingPrices(productId, product.getProductOfferingPrice());
+
+            for (ProductOfferingPrice pop : product.getProductOfferingPrice()) {
+                Price price = pop.getPrice();
+                if (price != null) {
+                    Price existingPrice = priceDao.findByProductOfferingPriceId(pop.getId());
+                    if (existingPrice == null) {
+                        price.setProductOfferingPriceId(pop.getId());
+                        int priceId = priceDao.savePrice(pop.getId(), price);
+                        price.setId(priceId);
+                    } else {
+                        priceDao.updatePrice(price);
+                    }
+
+                    DutyFreeAmount dutyFreeAmount = price.getDutyFreeAmount();
+                    if (dutyFreeAmount != null) {
+                        DutyFreeAmount existingDutyFreeAmount = dutyFreeAmountDao.findByPriceId(price.getId());
+                        if (existingDutyFreeAmount == null) {
+                            dutyFreeAmount.setPriceId(price.getId());
+                            dutyFreeAmountDao.saveDutyFreeAmount(dutyFreeAmount);
+                        } else {
+                            dutyFreeAmountDao.updateDutyFreeAmount(dutyFreeAmount);
+                        }
+                    }
+
+                    TaxIncludedAmount taxIncludedAmount = price.getTaxIncludedAmount();
+                    if (taxIncludedAmount != null) {
+                        TaxIncludedAmount existingTaxIncludedAmount = taxIncludedAmountDao.findByPriceId(price.getId());
+                        if (existingTaxIncludedAmount == null) {
+                            taxIncludedAmount.setPriceId(price.getId());
+                            taxIncludedAmountDao.saveTaxIncludedAmount(taxIncludedAmount);
+                        } else {
+                            taxIncludedAmountDao.updateTaxIncludedAmount(taxIncludedAmount);
+                        }
+                    }
+                }
+
+                UnitOfMeasure unitOfMeasure = pop.getUnitOfMeasure();
+                if (unitOfMeasure != null) {
+                    UnitOfMeasure existingUnitOfMeasure = unitOfMeasureDao.findByProductOfferingPriceId(pop.getId());
+                    if (existingUnitOfMeasure == null) {
+                        unitOfMeasure.setProductOfferingPriceId(pop.getId());
+                        unitOfMeasureDao.saveUnitOfMeasure(unitOfMeasure);
+                    } else {
+                        unitOfMeasureDao.updateUnitOfMeasure(unitOfMeasure);
+                    }
+                }
+
+                ValidFor validFor = pop.getValidFor();
+                if (validFor != null) {
+                    ValidFor existingValidFor = validForDao.findByProductOfferingPriceId(pop.getId());
+                    if (existingValidFor == null) {
+                        validFor.setProductOfferingPriceId(pop.getId());
+                        validForDao.saveValidFor(validFor);
+                    } else {
+                        validForDao.updateValidFor(validFor);
+                    }
+                }
             }
         }
 
