@@ -16,15 +16,19 @@ public class JdbcTaxIncludedAmountDao implements TaxIncludedAmountDao {
     }
 
     @Override
-    public void saveTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount) {
+    public TaxIncludedAmount saveTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount) {
         String insertTaxIncludedAmountSql = "INSERT INTO public.tax_included_amount (price_id, value, unit) VALUES (?, ?, ?)";
         jdbcTemplate.update(insertTaxIncludedAmountSql, taxIncludedAmount.getPriceId(), taxIncludedAmount.getValue(), taxIncludedAmount.getUnit());
+
+        return taxIncludedAmount;
     }
 
     @Override
-    public void updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount) {
+    public TaxIncludedAmount updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount) {
         String updateTaxIncludedAmountSql = "UPDATE public.tax_included_amount SET value = ?, unit = ? WHERE id = ?";
         jdbcTemplate.update(updateTaxIncludedAmountSql, taxIncludedAmount.getValue(), taxIncludedAmount.getUnit(), taxIncludedAmount.getId());
+
+        return taxIncludedAmount;
     }
 
     @Override

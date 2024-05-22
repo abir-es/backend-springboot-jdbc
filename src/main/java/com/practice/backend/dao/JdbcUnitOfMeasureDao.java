@@ -17,15 +17,19 @@ public class JdbcUnitOfMeasureDao implements UnitOfMeasureDao {
     }
 
     @Override
-    public void saveUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
+    public UnitOfMeasure saveUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
         String insertUnitOfMeasureSql = "INSERT INTO public.unit_of_measure (product_offering_price_id, amount, units) VALUES (?, ?, ?)";
         jdbcTemplate.update(insertUnitOfMeasureSql, unitOfMeasure.getProductOfferingPriceId(), unitOfMeasure.getAmount(), unitOfMeasure.getUnits());
+
+        return unitOfMeasure;
     }
 
     @Override
-    public void updateUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
+    public UnitOfMeasure updateUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
         String updateUnitOfMeasureSql = "UPDATE public.unit_of_measure SET amount = ?, units = ? WHERE id = ?";
         jdbcTemplate.update(updateUnitOfMeasureSql, unitOfMeasure.getAmount(), unitOfMeasure.getUnits(), unitOfMeasure.getId());
+
+        return unitOfMeasure;
     }
 
     @Override

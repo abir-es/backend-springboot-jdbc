@@ -17,15 +17,19 @@ public class JdbcValidForDao implements ValidForDao {
     }
 
     @Override
-    public void saveValidFor(ValidFor validFor) {
+    public ValidFor saveValidFor(ValidFor validFor) {
         String insertValidForSql = "INSERT INTO public.valid_for (product_offering_price_id, start_date_time) VALUES (?, ?)";
         jdbcTemplate.update(insertValidForSql, validFor.getProductOfferingPriceId(), validFor.getStartDateTime());
+
+        return validFor;
     }
 
     @Override
-    public void updateValidFor(ValidFor validFor) {
+    public ValidFor updateValidFor(ValidFor validFor) {
         String updateValidForSql = "UPDATE public.valid_for SET start_date_time = ? WHERE id = ?";
         jdbcTemplate.update(updateValidForSql, validFor.getStartDateTime(), validFor.getId());
+
+        return validFor;
     }
 
     @Override

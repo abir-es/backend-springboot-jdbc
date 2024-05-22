@@ -20,7 +20,7 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
     }
 
     @Override
-    public void saveProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
+    public List<ProductOfferingPrice> saveProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
         String insertProductOfferingPriceSql = "INSERT INTO public.product_offering_price (id, product_id, name, description, is_bundle, lifecycle_status, recurring_charge_period_length, price_type, version, last_update, percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         for (ProductOfferingPrice productOfferingPrice : productOfferingPrices) {
             jdbcTemplate.update(insertProductOfferingPriceSql,
@@ -37,6 +37,8 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
                     productOfferingPrice.getPercentage()
             );
         }
+
+        return productOfferingPrices;
     }
 
     /*@Override
@@ -70,7 +72,7 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
     }*/
 
     @Override
-    public void updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
+    public List<ProductOfferingPrice> updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
         String selectSql = "SELECT pop.id FROM public.product_offering_price pop " +
                 "JOIN public.product p ON pop.product_id = p.id " +
                 "WHERE p.name = ? AND pop.name = ?";
@@ -84,7 +86,7 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
 
         for (ProductOfferingPrice price : productOfferingPrices) {
             // Check if the ProductOfferingPrice exists
-            List<String> existingIds = jdbcTemplate.query(selectSql, new Object[]{productId, price.getName()}, (rs, rowNum) -> rs.getString("id"));
+            List<String> existingIds = jdbcTemplate.query(selectSql, (rs, rowNum) -> rs.getString("id"), productId, price.getName());
 
             if (existingIds.isEmpty()) {
                 // Prepare for batch insert
@@ -106,6 +108,8 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
         if (!updates.isEmpty()) {
             jdbcTemplate.batchUpdate(updateSql, updates);
         }
+
+        return productOfferingPrices;
     }
 
     @Override
@@ -115,7 +119,7 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
     }
 
     @Override
-    public void deleteByProductId(String productId){
+    public void deleteByProductId(String productId) {
         String sql = "DELETE FROM public.product_offering_price WHERE product_id = ?";
         jdbcTemplate.update(sql, productId);
     }
