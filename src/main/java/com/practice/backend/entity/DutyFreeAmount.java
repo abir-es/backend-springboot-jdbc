@@ -1,10 +1,13 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class DutyFreeAmount {
     private int id;
     private String unit;
     private Double value;
+    @JsonIgnore
     private int priceId;
 
     public int getId() {

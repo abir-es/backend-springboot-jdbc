@@ -1,8 +1,11 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class TaxIncludedAmount {
     private int id;
+    @JsonIgnore
     private int priceId;
     private String unit;
     private Double value;

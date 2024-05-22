@@ -1,8 +1,11 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class ValidFor {
     private int id;
+    @JsonIgnore
     private String productOfferingPriceId;
     private String startDateTime;
 

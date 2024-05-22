@@ -1,10 +1,12 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.SerializedName;
 
 public class ProductOfferingPrice {
     private String id;
+    @JsonIgnore
     private String productId;
     private String name;
     private String description;
