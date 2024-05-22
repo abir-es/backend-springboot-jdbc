@@ -6,4 +6,5 @@ public interface UnitOfMeasureDao {
     void saveUnitOfMeasure(UnitOfMeasure unitOfMeasure);
     void updateUnitOfMeasure(UnitOfMeasure unitOfMeasure);
     UnitOfMeasure findByProductOfferingPriceId(String productOfferingPriceId);
+    void deleteByProductOfferingPriceId(String productOfferingPriceId);
 }

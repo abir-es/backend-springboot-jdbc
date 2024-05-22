@@ -33,4 +33,10 @@ public class JdbcValidForDao implements ValidForDao {
         String selectValidForSql = "SELECT * FROM public.valid_for WHERE product_offering_price_id = ?";
         return jdbcTemplate.queryForObject(selectValidForSql, new BeanPropertyRowMapper<>(ValidFor.class), productOfferingPriceId);
     }
+
+    @Override
+    public void deleteByProductOfferingPriceId(String productOfferingPriceId) {
+        String sql = "DELETE FROM public.valid_for WHERE product_offering_price_id = ?";
+        jdbcTemplate.update(sql, productOfferingPriceId);
+    }
 }

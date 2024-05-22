@@ -45,4 +45,10 @@ public class JdbcProductOfferingRelationshipDao implements ProductOfferingRelati
         String selectProductOfferingRelationshipsSql = "SELECT por.id, por.name, por.role, por.type FROM public.product_offering_relationship por JOIN public.product_product_offering_relationship ppor ON por.id = ppor.product_offering_relationship_id WHERE ppor.product_id = ?";
         return jdbcTemplate.query(selectProductOfferingRelationshipsSql, (rs, rowNum) -> new ProductOfferingRelationship(rs.getString("id"), rs.getString("name"), rs.getString("role"), rs.getString("type")), productId);
     }
+
+    @Override
+    public void deleteByProductId(String productId){
+        String sql = "DELETE FROM public.product_product_offering_relationship where product_id = ?";
+        jdbcTemplate.update(sql, productId);
+    }
 }

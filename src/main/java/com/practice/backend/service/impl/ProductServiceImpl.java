@@ -69,111 +69,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void saveProduct(Product product) {
-        if (product == null){
-            log.error("Product cannot be null");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product cannot be null");
-        }
-
-        if(product.getName() == null || product.getName().isEmpty()){
-            log.error("Product name cannot be null or empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product name cannot be null or empty");
-        }
+        validateProduct(product);
 
         log.info("Saving product: {}", product);
 
         Product existingProduct = productDao.findById(product.getId());
         String productId = product.getId();
 
-        if (existingProduct == null) {
-            productDao.save(product);
-        } else {
+        if (productExists(product)) {
             productDao.update(product);
+        } else {
+            productDao.save(product);
         }
 
-        if (product.getChannel() != null) channelDao.updateChannels(productId, product.getChannel());
-        if (product.getProductOfferingRelationship() != null) productOfferingRelationshipDao.updateProductOfferingRelationships(productId, product.getProductOfferingRelationship());;
-
-        if (product.getProductOfferingPrice() != null) {
-            productOfferingPriceDao.updateProductOfferingPrices(productId, product.getProductOfferingPrice());
-
-            for (ProductOfferingPrice pop : product.getProductOfferingPrice()) {
-                Price price = pop.getPrice();
-                if (price != null) {
-                    Price existingPrice = priceDao.findByProductOfferingPriceId(pop.getId());
-                    if (existingPrice == null) {
-                        price.setProductOfferingPriceId(pop.getId());
-                        int priceId = priceDao.savePrice(pop.getId(), price);
-                        price.setId(priceId);
-                    } else {
-                        priceDao.updatePrice(price);
-                    }
-
-                    DutyFreeAmount dutyFreeAmount = price.getDutyFreeAmount();
-                    if (dutyFreeAmount != null) {
-                        DutyFreeAmount existingDutyFreeAmount = dutyFreeAmountDao.findByPriceId(price.getId());
-                        if (existingDutyFreeAmount == null) {
-                            dutyFreeAmount.setPriceId(price.getId());
-                            dutyFreeAmountDao.saveDutyFreeAmount(dutyFreeAmount);
-                        } else {
-                            dutyFreeAmountDao.updateDutyFreeAmount(dutyFreeAmount);
-                        }
-                    }
-
-                    TaxIncludedAmount taxIncludedAmount = price.getTaxIncludedAmount();
-                    if (taxIncludedAmount != null) {
-                        TaxIncludedAmount existingTaxIncludedAmount = taxIncludedAmountDao.findByPriceId(price.getId());
-                        if (existingTaxIncludedAmount == null) {
-                            taxIncludedAmount.setPriceId(price.getId());
-                            taxIncludedAmountDao.saveTaxIncludedAmount(taxIncludedAmount);
-                        } else {
-                            taxIncludedAmountDao.updateTaxIncludedAmount(taxIncludedAmount);
-                        }
-                    }
-                }
-
-                UnitOfMeasure unitOfMeasure = pop.getUnitOfMeasure();
-                if (unitOfMeasure != null) {
-                    UnitOfMeasure existingUnitOfMeasure = unitOfMeasureDao.findByProductOfferingPriceId(pop.getId());
-                    if (existingUnitOfMeasure == null) {
-                        unitOfMeasure.setProductOfferingPriceId(pop.getId());
-                        unitOfMeasureDao.saveUnitOfMeasure(unitOfMeasure);
-                    } else {
-                        unitOfMeasureDao.updateUnitOfMeasure(unitOfMeasure);
-                    }
-                }
-
-                ValidFor validFor = pop.getValidFor();
-                if (validFor != null) {
-                    ValidFor existingValidFor = validForDao.findByProductOfferingPriceId(pop.getId());
-                    if (existingValidFor == null) {
-                        validFor.setProductOfferingPriceId(pop.getId());
-                        validForDao.saveValidFor(validFor);
-                    } else {
-                        validForDao.updateValidFor(validFor);
-                    }
-                }
-            }
-        }
+        updateRelatedEntities(product);
 
         log.info("Saved product: {}", product);
     }
 
     @Override
     public void updateProduct(Product product, String id) {
-        if (id == null || id.isEmpty()) {
-            log.error("Product ID cannot be null or empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product ID cannot be null or empty");
-        }
-
-        if(product == null){
-            log.error("Product cannot be null");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product cannot be null");
-        }
-
-        if(product.getName() == null || product.getName().isEmpty()){
-            log.error("Product name cannot be null or empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product name cannot be null or empty");
-        }
+        validateProductId(id);
+        validateProduct(product);
 
         Product existingProduct = getProductById(id);
 
@@ -185,6 +102,9 @@ public class ProductServiceImpl implements ProductService {
         product.setId(id);
         log.info("Updating product for ID: {}", id);
         productDao.update(product);
+
+        updateRelatedEntities(product);
+
         log.info("Updated product: {}", product);
     }
 
@@ -199,8 +119,128 @@ public class ProductServiceImpl implements ProductService {
 
         if(existingProduct != null){
             log.info("Deleting product with id: {}", id);
+            List<ProductOfferingPrice> productOfferingPrices = productOfferingPriceDao.getProductOfferingPricesByProductId(id);
+            for (ProductOfferingPrice pop : productOfferingPrices){
+                Price price = pop.getPrice();
+                if (price != null){
+                    dutyFreeAmountDao.deleteByPriceId(price.getId());
+                    taxIncludedAmountDao.deleteByPriceId(price.getId());
+                    priceDao.deleteById(price.getId());
+                }
+                unitOfMeasureDao.deleteByProductOfferingPriceId(pop.getId());
+                validForDao.deleteByProductOfferingPriceId(pop.getId());
+            }
+
+            productOfferingPriceDao.deleteByProductId(id);
+            productOfferingRelationshipDao.deleteByProductId(id);
+            channelDao.deleteByProductId(id);
+
             productDao.deleteById(id);
             log.info("Deleted product with id: {}", id);
+        }
+    }
+
+    private void validateProduct(Product product) {
+        if (product == null || product.getName() == null || product.getName().isEmpty()) {
+            String errorMessage = (product == null) ? "Product cannot be null" : "Product name cannot be null or empty";
+            log.error(errorMessage);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
+    }
+
+    private void validateProductId(String id) {
+        if (id == null || id.isEmpty()) {
+            log.error("Product ID cannot be null or empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product ID cannot be null or empty");
+        }
+    }
+
+    private boolean productExists(Product product) {
+        return productDao.findById(product.getId()) != null;
+    }
+
+    private void updateRelatedEntities(Product product) {
+        String productId = product.getId();
+
+        if (product.getChannel() != null) {
+            channelDao.updateChannels(productId, product.getChannel());
+        }
+
+        if (product.getProductOfferingRelationship() != null) {
+            productOfferingRelationshipDao.updateProductOfferingRelationships(productId, product.getProductOfferingRelationship());
+        }
+
+        updateProductOfferingPrices(product.getProductOfferingPrice());
+    }
+
+    private void updateProductOfferingPrices(List<ProductOfferingPrice> productOfferingPrices) {
+        if (productOfferingPrices != null) {
+            for (ProductOfferingPrice pop : productOfferingPrices) {
+                updatePrice(pop.getPrice(), pop.getId());
+                updateUnitOfMeasure(pop.getUnitOfMeasure(), pop.getId());
+                updateValidFor(pop.getValidFor(), pop.getId());
+            }
+        }
+    }
+
+    private void updatePrice(Price price, String productOfferingPriceId) {
+        if (price != null) {
+            Price existingPrice = priceDao.findByProductOfferingPriceId(productOfferingPriceId);
+            if (existingPrice == null) {
+                int priceId = priceDao.savePrice(price.getProductOfferingPriceId(), price);
+                price.setId(priceId);
+            } else {
+                priceDao.updatePrice(price);
+            }
+
+            updateDutyFreeAmount(price.getDutyFreeAmount(), price.getId());
+            updateTaxIncludedAmount(price.getTaxIncludedAmount(), price.getId());
+        }
+    }
+
+    private void updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount, int priceId) {
+        if (dutyFreeAmount != null) {
+            DutyFreeAmount existingDutyFreeAmount = dutyFreeAmountDao.findByPriceId(priceId);
+            if (existingDutyFreeAmount == null) {
+                dutyFreeAmount.setPriceId(priceId);
+                dutyFreeAmountDao.saveDutyFreeAmount(dutyFreeAmount);
+            } else {
+                dutyFreeAmountDao.updateDutyFreeAmount(dutyFreeAmount);
+            }
+        }
+    }
+
+    private void updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount, int priceId) {
+        if (taxIncludedAmount != null) {
+            TaxIncludedAmount existingTaxIncludedAmount = taxIncludedAmountDao.findByPriceId(priceId);
+            if (existingTaxIncludedAmount == null) {
+                taxIncludedAmount.setPriceId(priceId);
+                taxIncludedAmountDao.saveTaxIncludedAmount(taxIncludedAmount);
+            } else {
+                taxIncludedAmountDao.updateTaxIncludedAmount(taxIncludedAmount);
+            }
+        }
+    }
+
+    private void updateUnitOfMeasure(UnitOfMeasure unitOfMeasure, String productOfferingPriceId) {
+        if (unitOfMeasure != null) {
+            UnitOfMeasure existingUnitOfMeasure = unitOfMeasureDao.findByProductOfferingPriceId(productOfferingPriceId);
+            if (existingUnitOfMeasure == null) {
+                unitOfMeasureDao.saveUnitOfMeasure(unitOfMeasure);
+            } else {
+                unitOfMeasureDao.updateUnitOfMeasure(unitOfMeasure);
+            }
+        }
+    }
+
+    private void updateValidFor(ValidFor validFor, String productOfferingPriceId) {
+        if (validFor != null) {
+            ValidFor existingValidFor = validForDao.findByProductOfferingPriceId(productOfferingPriceId);
+            if (existingValidFor == null) {
+                validForDao.saveValidFor(validFor);
+            } else {
+                validForDao.updateValidFor(validFor);
+            }
         }
     }
 }

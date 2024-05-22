@@ -33,4 +33,10 @@ public class JdbcPriceDao implements PriceDao {
         String selectPriceSql = "SELECT * FROM public.price WHERE product_offering_price_id = ?";
         return jdbcTemplate.queryForObject(selectPriceSql, new BeanPropertyRowMapper<>(Price.class), productOfferingPriceId);
     }
+
+    @Override
+    public void deleteById(int id) {
+        String sql = "DELETE FROM public.price WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
 }

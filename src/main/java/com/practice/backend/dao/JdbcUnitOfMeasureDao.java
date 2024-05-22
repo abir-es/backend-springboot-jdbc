@@ -33,4 +33,10 @@ public class JdbcUnitOfMeasureDao implements UnitOfMeasureDao {
         String selectUnitOfMeasureSql = "SELECT * FROM public.unit_of_measure WHERE product_offering_price_id = ?";
         return jdbcTemplate.queryForObject(selectUnitOfMeasureSql, new BeanPropertyRowMapper<>(UnitOfMeasure.class), productOfferingPriceId);
     }
+
+    @Override
+    public void deleteByProductOfferingPriceId(String productOfferingPriceId) {
+        String sql = "DELETE FROM public.unit_of_measure WHERE product_offering_price_id = ?";
+        jdbcTemplate.update(sql, productOfferingPriceId);
+    }
 }

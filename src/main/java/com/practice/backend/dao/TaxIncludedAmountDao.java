@@ -6,4 +6,5 @@ public interface TaxIncludedAmountDao {
     void saveTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount);
     void updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount);
     TaxIncludedAmount findByPriceId(int priceId);
+    void deleteByPriceId(int priceId);
 }

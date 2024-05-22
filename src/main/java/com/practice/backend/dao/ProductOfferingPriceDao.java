@@ -8,4 +8,5 @@ public interface ProductOfferingPriceDao {
     void saveProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices);
     void updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices);
     List<ProductOfferingPrice> getProductOfferingPricesByProductId(String productId);
+    void deleteByProductId(String productId);
 }

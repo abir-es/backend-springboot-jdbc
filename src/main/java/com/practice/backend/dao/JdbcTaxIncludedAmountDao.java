@@ -32,4 +32,10 @@ public class JdbcTaxIncludedAmountDao implements TaxIncludedAmountDao {
         String selectTaxIncludedAmountSql = "SELECT * FROM public.tax_included_amount WHERE price_id = ?";
         return jdbcTemplate.queryForObject(selectTaxIncludedAmountSql, new BeanPropertyRowMapper<>(TaxIncludedAmount.class), priceId);
     }
+
+    @Override
+    public void deleteByPriceId(int priceId) {
+        String sql = "DELETE FROM public.tax_included_amount WHERE price_id = ?";
+        jdbcTemplate.update(sql, priceId);
+    }
 }
