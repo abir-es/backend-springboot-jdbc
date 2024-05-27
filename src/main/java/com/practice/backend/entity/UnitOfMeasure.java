@@ -1,8 +1,11 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class UnitOfMeasure {
     private int id;
+    @JsonIgnore
     private String productOfferingPriceId;
     private Double amount;
     private String units;

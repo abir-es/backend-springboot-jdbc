@@ -1,8 +1,10 @@
 package com.practice.backend.service.impl;
 
 import com.practice.backend.dao.*;
+import com.practice.backend.dto.ProductDto;
 import com.practice.backend.entity.*;
 import com.practice.backend.service.ProductService;
+import com.practice.backend.utils.EntityDtoMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,8 @@ public class ProductServiceImpl implements ProductService {
     private final UnitOfMeasureDao unitOfMeasureDao;
     private final ValidForDao validForDao;
 
+    EntityDtoMapper<Product, ProductDto> entityDtoMapper = new EntityDtoMapper<>();
+
     @Autowired
     public ProductServiceImpl(ProductDao productDao, ChannelDao channelDao, ProductOfferingPriceDao productOfferingPriceDao, ProductOfferingRelationshipDao productOfferingRelationshipDao, PriceDao priceDao, DutyFreeAmountDao dutyFreeAmountDao, TaxIncludedAmountDao taxIncludedAmountDao, UnitOfMeasureDao unitOfMeasureDao, ValidForDao validForDao) {
         this.productDao = productDao;
@@ -40,7 +44,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product getProductById(String id) {
+    public ProductDto getProductById(String id) {
         log.info("Getting product by ID: {}", id);
         Product product = productDao.findById(id);
 
@@ -50,11 +54,16 @@ public class ProductServiceImpl implements ProductService {
         }
 
         log.info("Fetched Product: {}", product);
-        return product;
+        try {
+            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
+        }catch (Exception e){
+            log.error("Error mapping product to response dto: ", e);
+            throw new RuntimeException("Error mapping product to response dto: ", e);
+        }
     }
 
     @Override
-    public List<Product> getAllProducts() {
+    public List<ProductDto> getAllProducts() {
         log.info("Fetching all products");
         List<Product> products = productDao.findAll();
 
@@ -64,11 +73,16 @@ public class ProductServiceImpl implements ProductService {
         }
 
         log.info("Fetched products: {}", products);
-        return products;
+        try {
+            return entityDtoMapper.mapEntitiesToDtos(products, ProductDto.class);
+        }catch (Exception e){
+            log.error("Error mapping product to response dto: ", e);
+            throw new RuntimeException("Error mapping product to response dto: ", e);
+        }
     }
 
     @Override
-    public void saveProduct(Product product) {
+    public ProductDto saveProduct(Product product) {
         validateProduct(product);
 
         log.info("Saving product: {}", product);
@@ -85,14 +99,21 @@ public class ProductServiceImpl implements ProductService {
         updateRelatedEntities(product);
 
         log.info("Saved product: {}", product);
+
+        try {
+            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
+        }catch (Exception e){
+            log.error("Error mapping product to response dto: ", e);
+            throw new RuntimeException("Error mapping product to response dto: ", e);
+        }
     }
 
     @Override
-    public void updateProduct(Product product, String id) {
+    public ProductDto updateProduct(Product product, String id) {
         validateProductId(id);
         validateProduct(product);
 
-        Product existingProduct = getProductById(id);
+        ProductDto existingProduct = getProductById(id);
 
         if(existingProduct == null){
             log.error("Product not found with id: {}", id);
@@ -106,6 +127,13 @@ public class ProductServiceImpl implements ProductService {
         updateRelatedEntities(product);
 
         log.info("Updated product: {}", product);
+
+        try {
+            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
+        }catch (Exception e){
+            log.error("Error mapping product to response dto: ", e);
+            throw new RuntimeException("Error mapping product to response dto: ", e);
+        }
     }
 
     @Override
@@ -115,7 +143,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product ID cannot be null or empty");
         }
 
-        Product existingProduct = getProductById(id);
+        ProductDto existingProduct = getProductById(id);
 
         if(existingProduct != null){
             log.info("Deleting product with id: {}", id);
@@ -187,8 +215,8 @@ public class ProductServiceImpl implements ProductService {
         if (price != null) {
             Price existingPrice = priceDao.findByProductOfferingPriceId(productOfferingPriceId);
             if (existingPrice == null) {
-                int priceId = priceDao.savePrice(price.getProductOfferingPriceId(), price);
-                price.setId(priceId);
+                Price savedPrice = priceDao.savePrice(price.getProductOfferingPriceId(), price);
+                price.setId(savedPrice.getId());
             } else {
                 priceDao.updatePrice(price);
             }

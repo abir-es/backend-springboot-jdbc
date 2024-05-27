@@ -17,15 +17,17 @@ public class JdbcDutyFreeAmountDao implements DutyFreeAmountDao {
     }
 
     @Override
-    public void saveDutyFreeAmount(DutyFreeAmount dutyFreeAmount) {
+    public DutyFreeAmount saveDutyFreeAmount(DutyFreeAmount dutyFreeAmount) {
         String insertDutyFreeAmountSql = "INSERT INTO public.duty_free_amount (price_id, value, unit) VALUES (?, ?, ?)";
         jdbcTemplate.update(insertDutyFreeAmountSql, dutyFreeAmount.getPriceId(), dutyFreeAmount.getValue(), dutyFreeAmount.getUnit());
+        return dutyFreeAmount;
     }
 
     @Override
-    public void updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount) {
+    public DutyFreeAmount updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount) {
         String updateDutyFreeAmountSql = "UPDATE public.duty_free_amount SET value = ?, unit = ? WHERE id = ?";
         jdbcTemplate.update(updateDutyFreeAmountSql, dutyFreeAmount.getValue(), dutyFreeAmount.getUnit(), dutyFreeAmount.getId());
+        return dutyFreeAmount;
     }
 
     @Override

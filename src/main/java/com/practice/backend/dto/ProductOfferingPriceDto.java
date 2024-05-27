@@ -1,13 +1,10 @@
 
-package com.practice.backend.entity;
+package com.practice.backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class ProductOfferingPrice {
+public class ProductOfferingPriceDto {
     private String id;
-    @JsonIgnore
-    private String productId;
     private String name;
     private String description;
     private int recurringChargePeriodLength;
@@ -17,11 +14,11 @@ public class ProductOfferingPrice {
     private int percentage;
     private String priceType;
     private String version;
-    @SerializedName("@type")
+    @JsonAlias("@type")
     private String type;
-    private Price price;
-    private UnitOfMeasure unitOfMeasure;
-    private ValidFor validFor;
+    private PriceDto priceDto;
+    private UnitOfMeasureDto unitOfMeasureDto;
+    private ValidForDto validForDto;
 
     public String getDescription() {
         return description;
@@ -37,14 +34,6 @@ public class ProductOfferingPrice {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
     }
 
     public Boolean getIsBundle() {
@@ -87,12 +76,12 @@ public class ProductOfferingPrice {
         this.percentage = percentage;
     }
 
-    public Price getPrice() {
-        return price;
+    public PriceDto getPrice() {
+        return priceDto;
     }
 
-    public void setPrice(Price price) {
-        this.price = price;
+    public void setPrice(PriceDto priceDto) {
+        this.priceDto = priceDto;
     }
 
     public String getPriceType() {
@@ -119,20 +108,20 @@ public class ProductOfferingPrice {
         this.type = type;
     }
 
-    public UnitOfMeasure getUnitOfMeasure() {
-        return unitOfMeasure;
+    public UnitOfMeasureDto getUnitOfMeasure() {
+        return unitOfMeasureDto;
     }
 
-    public void setUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
-        this.unitOfMeasure = unitOfMeasure;
+    public void setUnitOfMeasure(UnitOfMeasureDto unitOfMeasureDto) {
+        this.unitOfMeasureDto = unitOfMeasureDto;
     }
 
-    public ValidFor getValidFor() {
-        return validFor;
+    public ValidForDto getValidFor() {
+        return validForDto;
     }
 
-    public void setValidFor(ValidFor validFor) {
-        this.validFor = validFor;
+    public void setValidFor(ValidForDto validForDto) {
+        this.validForDto = validForDto;
     }
 
     public String getVersion() {
@@ -141,26 +130,5 @@ public class ProductOfferingPrice {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    @Override
-    public String toString() {
-        return "ProductOfferingPrice{" +
-                "id='" + id + '\'' +
-                ", productId='" + productId + '\'' +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", recurringChargePeriodLength=" + recurringChargePeriodLength +
-                ", isBundle=" + isBundle +
-                ", lastUpdate='" + lastUpdate + '\'' +
-                ", lifecycleStatus='" + lifecycleStatus + '\'' +
-                ", percentage=" + percentage +
-                ", priceType='" + priceType + '\'' +
-                ", version='" + version + '\'' +
-                ", type='" + type + '\'' +
-                ", price=" + price +
-                ", unitOfMeasure=" + unitOfMeasure +
-                ", validFor=" + validFor +
-                '}';
     }
 }

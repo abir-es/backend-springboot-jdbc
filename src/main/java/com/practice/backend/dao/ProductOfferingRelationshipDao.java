@@ -5,8 +5,8 @@ import com.practice.backend.entity.ProductOfferingRelationship;
 import java.util.List;
 
 public interface ProductOfferingRelationshipDao {
-    void saveProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships);
-    void updateProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships);
+    List<ProductOfferingRelationship> saveProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships);
+    List<ProductOfferingRelationship> updateProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships);
     List<ProductOfferingRelationship> getProductOfferingRelationshipsByProductId(String productId);
     void deleteByProductId(String productId);
 }

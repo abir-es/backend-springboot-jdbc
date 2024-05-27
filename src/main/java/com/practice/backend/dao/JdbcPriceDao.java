@@ -17,15 +17,18 @@ public class JdbcPriceDao implements PriceDao {
     }
 
     @Override
-    public Integer savePrice(String offeringPriceId, Price price) {
+    public Price savePrice(String offeringPriceId, Price price) {
         String insertPriceSql = "INSERT INTO public.price (product_offering_price_id, percentage, tax_category, tax_rate, unit, value) VALUES (?, ?, ?, ?, ?, ?) RETURNING id";
-        return jdbcTemplate.queryForObject(insertPriceSql, Integer.class, offeringPriceId, price.getPercentage(), price.getTaxCategory(), price.getTaxRate(), price.getUnit(), price.getValue());
+        int priceId = jdbcTemplate.queryForObject(insertPriceSql, Integer.class, offeringPriceId, price.getPercentage(), price.getTaxCategory(), price.getTaxRate(), price.getUnit(), price.getValue());
+        price.setId(priceId);
+        return price;
     }
 
     @Override
-    public void updatePrice(Price price) {
+    public Price updatePrice(Price price) {
         String updatePriceSql = "UPDATE public.price SET percentage = ?, tax_category = ?, tax_rate = ?, unit = ?, value = ? WHERE id = ?";
         jdbcTemplate.update(updatePriceSql, price.getPercentage(), price.getTaxCategory(), price.getTaxRate(), price.getUnit(), price.getValue(), price.getId());
+        return price;
     }
 
     @Override

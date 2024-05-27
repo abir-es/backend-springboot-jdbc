@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -16,28 +17,40 @@ public class JdbcProductOfferingRelationshipDao implements ProductOfferingRelati
     }
 
     @Override
-    public void saveProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships) {
+    public List<ProductOfferingRelationship> saveProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships) {
         String insertProductOfferingRelationshipSql = "INSERT INTO public.product_offering_relationship (id, name, role, type) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO NOTHING";
         String insertProductProductOfferingRelationshipSql = "INSERT INTO public.product_product_offering_relationship (product_id, product_offering_relationship_id) VALUES (?, ?)";
+
+        List<ProductOfferingRelationship> savedPOR = new ArrayList<>();
+
         for (ProductOfferingRelationship relationship : relationships) {
             jdbcTemplate.update(insertProductOfferingRelationshipSql, relationship.getId(), relationship.getName(), relationship.getRole(), relationship.getType());
             jdbcTemplate.update(insertProductProductOfferingRelationshipSql, productId, relationship.getId());
+
+            savedPOR.add(relationship);
         }
 
+        return savedPOR;
     }
 
     @Override
-    public void updateProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships) {
+    public List<ProductOfferingRelationship> updateProductOfferingRelationships(String productId, List<ProductOfferingRelationship> relationships) {
         String upsertSql = "INSERT INTO public.product_offering_relationship (id, name, role, type) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET name= EXCLUDED.name, role = EXCLUDED.role, type = EXCLUDED.type";
         String deleteSql = "DELETE FROM public.product_product_offering_relationship WHERE product_id = ?";
         String insertSql = "INSERT INTO public.product_product_offering_relationship (product_id, product_offering_relationship_id) VALUES (?, ?) ON CONFLICT (product_id, product_offering_relationship_id) DO NOTHING";
 
         jdbcTemplate.update(deleteSql, productId);
 
-        for (ProductOfferingRelationship relationship : relationships){
+        List<ProductOfferingRelationship> updatedPOR = new ArrayList<>();
+
+        for (ProductOfferingRelationship relationship : relationships) {
             jdbcTemplate.update(upsertSql, relationship.getId(), relationship.getName(), relationship.getRole(), relationship.getType());
             jdbcTemplate.update(insertSql, productId, relationship.getId());
+
+            updatedPOR.add(relationship);
         }
+
+        return updatedPOR;
     }
 
     @Override
@@ -47,7 +60,7 @@ public class JdbcProductOfferingRelationshipDao implements ProductOfferingRelati
     }
 
     @Override
-    public void deleteByProductId(String productId){
+    public void deleteByProductId(String productId) {
         String sql = "DELETE FROM public.product_product_offering_relationship where product_id = ?";
         jdbcTemplate.update(sql, productId);
     }
