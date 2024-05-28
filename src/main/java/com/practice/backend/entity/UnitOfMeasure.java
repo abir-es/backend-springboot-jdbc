@@ -45,7 +45,9 @@ public class UnitOfMeasure {
     @Override
     public String toString() {
         return "UnitOfMeasure{" +
-                "amount=" + amount +
+                "id=" + id +
+                ", productOfferingPriceId='" + productOfferingPriceId + '\'' +
+                ", amount=" + amount +
                 ", units='" + units + '\'' +
                 '}';
     }

@@ -45,10 +45,10 @@ public class DutyFreeAmount {
     @Override
     public String toString() {
         return "DutyFreeAmount{" +
-                "unit='" + unit + '\'' +
+                "id=" + id +
+                ", unit='" + unit + '\'' +
                 ", value=" + value +
                 ", priceId=" + priceId +
                 '}';
     }
-
 }

@@ -4,15 +4,18 @@ import com.practice.backend.dao.*;
 import com.practice.backend.dto.ProductDto;
 import com.practice.backend.entity.*;
 import com.practice.backend.service.ProductService;
-import com.practice.backend.utils.EntityDtoMapper;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -28,10 +31,10 @@ public class ProductServiceImpl implements ProductService {
     private final UnitOfMeasureDao unitOfMeasureDao;
     private final ValidForDao validForDao;
 
-    EntityDtoMapper<Product, ProductDto> entityDtoMapper = new EntityDtoMapper<>();
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public ProductServiceImpl(ProductDao productDao, ChannelDao channelDao, ProductOfferingPriceDao productOfferingPriceDao, ProductOfferingRelationshipDao productOfferingRelationshipDao, PriceDao priceDao, DutyFreeAmountDao dutyFreeAmountDao, TaxIncludedAmountDao taxIncludedAmountDao, UnitOfMeasureDao unitOfMeasureDao, ValidForDao validForDao) {
+    public ProductServiceImpl(ProductDao productDao, ChannelDao channelDao, ProductOfferingPriceDao productOfferingPriceDao, ProductOfferingRelationshipDao productOfferingRelationshipDao, PriceDao priceDao, DutyFreeAmountDao dutyFreeAmountDao, TaxIncludedAmountDao taxIncludedAmountDao, UnitOfMeasureDao unitOfMeasureDao, ValidForDao validForDao, ModelMapper modelMapper) {
         this.productDao = productDao;
         this.channelDao = channelDao;
         this.productOfferingPriceDao = productOfferingPriceDao;
@@ -41,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
         this.taxIncludedAmountDao = taxIncludedAmountDao;
         this.unitOfMeasureDao = unitOfMeasureDao;
         this.validForDao = validForDao;
+        this.modelMapper = modelMapper;
     }
 
     @Override
@@ -48,15 +52,15 @@ public class ProductServiceImpl implements ProductService {
         log.info("Getting product by ID: {}", id);
         Product product = productDao.findById(id);
 
-        if(product == null){
+        if (product == null) {
             log.error("Product not found with id: {}", id);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + id);
         }
 
         log.info("Fetched Product: {}", product);
         try {
-            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
-        }catch (Exception e){
+            return modelMapper.map(product, ProductDto.class);
+        } catch (Exception e) {
             log.error("Error mapping product to response dto: ", e);
             throw new RuntimeException("Error mapping product to response dto: ", e);
         }
@@ -67,15 +71,17 @@ public class ProductServiceImpl implements ProductService {
         log.info("Fetching all products");
         List<Product> products = productDao.findAll();
 
-        if(products == null){
+        if (products == null) {
             log.error("Something went wrong, the response is null");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong!");
         }
 
         log.info("Fetched products: {}", products);
         try {
-            return entityDtoMapper.mapEntitiesToDtos(products, ProductDto.class);
-        }catch (Exception e){
+            return products.stream()
+                    .map(product -> modelMapper.map(product, ProductDto.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
             log.error("Error mapping product to response dto: ", e);
             throw new RuntimeException("Error mapping product to response dto: ", e);
         }
@@ -83,26 +89,34 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto saveProduct(Product product) {
+        Product savedProduct;
+
         validateProduct(product);
 
         log.info("Saving product: {}", product);
 
-        Product existingProduct = productDao.findById(product.getId());
-        String productId = product.getId();
-
         if (productExists(product)) {
-            productDao.update(product);
+            savedProduct = productDao.update(product);
         } else {
-            productDao.save(product);
+            savedProduct = productDao.save(product);
         }
 
-        updateRelatedEntities(product);
+        if (product.getChannel() != null) {
+            savedProduct.setChannel(channelDao.updateChannels(product.getId(), product.getChannel()));
+        }
 
-        log.info("Saved product: {}", product);
+        if (product.getProductOfferingRelationship() != null) {
+            savedProduct.setProductOfferingRelationship(productOfferingRelationshipDao.updateProductOfferingRelationships(product.getId(), product.getProductOfferingRelationship()));
+        }
+
+        savedProduct.setProductOfferingPrice(updateProductOfferingPrices(product.getId(), product.getProductOfferingPrice()));
 
         try {
-            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
-        }catch (Exception e){
+            ProductDto productDto = modelMapper.map(savedProduct, ProductDto.class);
+            log.info("mapped product: {}", productDto);
+            log.info("Saved product: {}", savedProduct);
+            return productDto;
+        } catch (Exception e) {
             log.error("Error mapping product to response dto: ", e);
             throw new RuntimeException("Error mapping product to response dto: ", e);
         }
@@ -110,27 +124,36 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto updateProduct(Product product, String id) {
+        Product updatedProduct;
         validateProductId(id);
         validateProduct(product);
 
         ProductDto existingProduct = getProductById(id);
 
-        if(existingProduct == null){
+        if (existingProduct == null) {
             log.error("Product not found with id: {}", id);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + id);
         }
 
         product.setId(id);
         log.info("Updating product for ID: {}", id);
-        productDao.update(product);
+        updatedProduct = productDao.update(product);
 
-        updateRelatedEntities(product);
+        if (product.getChannel() != null) {
+            updatedProduct.setChannel(channelDao.updateChannels(product.getId(), product.getChannel()));
+        }
 
-        log.info("Updated product: {}", product);
+        if (product.getProductOfferingRelationship() != null) {
+            updatedProduct.setProductOfferingRelationship(productOfferingRelationshipDao.updateProductOfferingRelationships(product.getId(), product.getProductOfferingRelationship()));
+        }
+
+        updatedProduct.setProductOfferingPrice(updateProductOfferingPrices(product.getId(), product.getProductOfferingPrice()));
+
+        log.info("Updated product: {}", updatedProduct);
 
         try {
-            return entityDtoMapper.mapEntityToDto(product, ProductDto.class);
-        }catch (Exception e){
+            return modelMapper.map(updatedProduct, ProductDto.class);
+        } catch (Exception e) {
             log.error("Error mapping product to response dto: ", e);
             throw new RuntimeException("Error mapping product to response dto: ", e);
         }
@@ -145,12 +168,12 @@ public class ProductServiceImpl implements ProductService {
 
         ProductDto existingProduct = getProductById(id);
 
-        if(existingProduct != null){
+        if (existingProduct != null) {
             log.info("Deleting product with id: {}", id);
             List<ProductOfferingPrice> productOfferingPrices = productOfferingPriceDao.getProductOfferingPricesByProductId(id);
-            for (ProductOfferingPrice pop : productOfferingPrices){
+            for (ProductOfferingPrice pop : productOfferingPrices) {
                 Price price = pop.getPrice();
-                if (price != null){
+                if (price != null) {
                     dutyFreeAmountDao.deleteByPriceId(price.getId());
                     taxIncludedAmountDao.deleteByPriceId(price.getId());
                     priceDao.deleteById(price.getId());
@@ -184,91 +207,146 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private boolean productExists(Product product) {
-        return productDao.findById(product.getId()) != null;
+        try {
+            return productDao.findById(product.getId()) != null;
+        } catch (EmptyResultDataAccessException e) {
+            log.error("Error while checking product existence", e);
+            return false;
+        }
     }
 
-    private void updateRelatedEntities(Product product) {
-        String productId = product.getId();
-
-        if (product.getChannel() != null) {
-            channelDao.updateChannels(productId, product.getChannel());
-        }
-
-        if (product.getProductOfferingRelationship() != null) {
-            productOfferingRelationshipDao.updateProductOfferingRelationships(productId, product.getProductOfferingRelationship());
-        }
-
-        updateProductOfferingPrices(product.getProductOfferingPrice());
-    }
-
-    private void updateProductOfferingPrices(List<ProductOfferingPrice> productOfferingPrices) {
+    private List<ProductOfferingPrice> updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
+        log.info("Updating product offering prices for product id: " + productId);
+        List<ProductOfferingPrice> productOfferingPriceList = new ArrayList<>();
         if (productOfferingPrices != null) {
+            productOfferingPriceDao.updateProductOfferingPrices(productId, productOfferingPrices);
+
             for (ProductOfferingPrice pop : productOfferingPrices) {
-                updatePrice(pop.getPrice(), pop.getId());
-                updateUnitOfMeasure(pop.getUnitOfMeasure(), pop.getId());
-                updateValidFor(pop.getValidFor(), pop.getId());
+                Price price = updatePrice(pop.getPrice(), pop.getId());
+                UnitOfMeasure unitOfMeasure = updateUnitOfMeasure(pop.getUnitOfMeasure(), pop.getId());
+                ValidFor validFor = updateValidFor(pop.getValidFor(), pop.getId());
+
+                pop.setPrice(price);
+                pop.setUnitOfMeasure(unitOfMeasure);
+                pop.setValidFor(validFor);
+                productOfferingPriceList.add(pop);
             }
         }
+        log.info("Updated product offering prices: " + productOfferingPriceList);
+        return productOfferingPriceList;
     }
 
-    private void updatePrice(Price price, String productOfferingPriceId) {
+    private Price updatePrice(Price price, String productOfferingPriceId) {
+        log.info("Updating price for product offering price id: " + productOfferingPriceId);
+        Price existingPrice = null;
         if (price != null) {
-            Price existingPrice = priceDao.findByProductOfferingPriceId(productOfferingPriceId);
+            try {
+                existingPrice = priceDao.findByProductOfferingPriceId(productOfferingPriceId);
+                price.setId(existingPrice.getId());
+                log.info("Found existing price: {}", existingPrice);
+            } catch (EmptyResultDataAccessException ignored) {
+                log.warn("No existing price found for product offering price id: " + productOfferingPriceId);
+                existingPrice = null;
+            }
             if (existingPrice == null) {
-                Price savedPrice = priceDao.savePrice(price.getProductOfferingPriceId(), price);
-                price.setId(savedPrice.getId());
+                existingPrice = priceDao.savePrice(productOfferingPriceId, price);
+                price.setId(existingPrice.getId());
             } else {
-                priceDao.updatePrice(price);
+                existingPrice = priceDao.updatePrice(price);
             }
 
-            updateDutyFreeAmount(price.getDutyFreeAmount(), price.getId());
-            updateTaxIncludedAmount(price.getTaxIncludedAmount(), price.getId());
+            log.info("Price: {}", price);
+            DutyFreeAmount dutyFreeAmount = updateDutyFreeAmount(price.getDutyFreeAmount(), price.getId());
+            TaxIncludedAmount taxIncludedAmount = updateTaxIncludedAmount(price.getTaxIncludedAmount(), price.getId());
+
+            existingPrice.setDutyFreeAmount(dutyFreeAmount);
+            existingPrice.setTaxIncludedAmount(taxIncludedAmount);
         }
+        log.info("Updated price: " + existingPrice);
+        return existingPrice;
     }
 
-    private void updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount, int priceId) {
+    private DutyFreeAmount updateDutyFreeAmount(DutyFreeAmount dutyFreeAmount, int priceId) {
+        log.info("Updating DutyFreeAmount for price id: " + priceId);
+        DutyFreeAmount existingDutyFreeAmount = null;
         if (dutyFreeAmount != null) {
-            DutyFreeAmount existingDutyFreeAmount = dutyFreeAmountDao.findByPriceId(priceId);
+            try {
+                existingDutyFreeAmount = dutyFreeAmountDao.findByPriceId(priceId);
+            } catch (EmptyResultDataAccessException ignored) {
+                log.warn("No existing DutyFreeAmount found for price id: " + priceId);
+                existingDutyFreeAmount = null;
+            }
             if (existingDutyFreeAmount == null) {
                 dutyFreeAmount.setPriceId(priceId);
-                dutyFreeAmountDao.saveDutyFreeAmount(dutyFreeAmount);
+                existingDutyFreeAmount = dutyFreeAmountDao.saveDutyFreeAmount(dutyFreeAmount);
             } else {
-                dutyFreeAmountDao.updateDutyFreeAmount(dutyFreeAmount);
+                existingDutyFreeAmount = dutyFreeAmountDao.updateDutyFreeAmount(dutyFreeAmount);
             }
         }
+        log.info("Updated DutyFreeAmount: " + existingDutyFreeAmount);
+        return existingDutyFreeAmount;
     }
 
-    private void updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount, int priceId) {
+    private TaxIncludedAmount updateTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount, int priceId) {
+        log.info("Updating TaxIncludedAmount for price id: " + priceId);
+        TaxIncludedAmount existingTaxIncludedAmount = null;
         if (taxIncludedAmount != null) {
-            TaxIncludedAmount existingTaxIncludedAmount = taxIncludedAmountDao.findByPriceId(priceId);
+            try {
+                existingTaxIncludedAmount = taxIncludedAmountDao.findByPriceId(priceId);
+            } catch (EmptyResultDataAccessException ignored) {
+                log.warn("No existing TaxIncludedAmount found for price id: " + priceId);
+                existingTaxIncludedAmount = null;
+            }
             if (existingTaxIncludedAmount == null) {
                 taxIncludedAmount.setPriceId(priceId);
-                taxIncludedAmountDao.saveTaxIncludedAmount(taxIncludedAmount);
+                existingTaxIncludedAmount = taxIncludedAmountDao.saveTaxIncludedAmount(taxIncludedAmount);
             } else {
-                taxIncludedAmountDao.updateTaxIncludedAmount(taxIncludedAmount);
+                existingTaxIncludedAmount = taxIncludedAmountDao.updateTaxIncludedAmount(taxIncludedAmount);
             }
         }
+        log.info("Updated TaxIncludedAmount: " + existingTaxIncludedAmount);
+        return existingTaxIncludedAmount;
     }
 
-    private void updateUnitOfMeasure(UnitOfMeasure unitOfMeasure, String productOfferingPriceId) {
+    private UnitOfMeasure updateUnitOfMeasure(UnitOfMeasure unitOfMeasure, String productOfferingPriceId) {
+        log.info("Updating UnitOfMeasure for product offering price id: " + productOfferingPriceId);
+        UnitOfMeasure existingUnitOfMeasure = null;
         if (unitOfMeasure != null) {
-            UnitOfMeasure existingUnitOfMeasure = unitOfMeasureDao.findByProductOfferingPriceId(productOfferingPriceId);
+            unitOfMeasure.setProductOfferingPriceId(productOfferingPriceId);
+            try {
+                existingUnitOfMeasure = unitOfMeasureDao.findByProductOfferingPriceId(productOfferingPriceId);
+            } catch (EmptyResultDataAccessException ignored) {
+                log.warn("No existing UnitOfMeasure found for product offering price id: " + productOfferingPriceId);
+                existingUnitOfMeasure = null;
+            }
             if (existingUnitOfMeasure == null) {
-                unitOfMeasureDao.saveUnitOfMeasure(unitOfMeasure);
+                existingUnitOfMeasure = unitOfMeasureDao.saveUnitOfMeasure(unitOfMeasure);
             } else {
-                unitOfMeasureDao.updateUnitOfMeasure(unitOfMeasure);
+                existingUnitOfMeasure = unitOfMeasureDao.updateUnitOfMeasure(unitOfMeasure);
             }
         }
+        log.info("Updated UnitOfMeasure: " + existingUnitOfMeasure);
+        return existingUnitOfMeasure;
     }
 
-    private void updateValidFor(ValidFor validFor, String productOfferingPriceId) {
+    private ValidFor updateValidFor(ValidFor validFor, String productOfferingPriceId) {
+        log.info("Updating ValidFor for product offering price id: " + productOfferingPriceId);
+        ValidFor existingValidFor = null;
         if (validFor != null) {
-            ValidFor existingValidFor = validForDao.findByProductOfferingPriceId(productOfferingPriceId);
+            validFor.setProductOfferingPriceId(productOfferingPriceId);
+            try {
+                existingValidFor = validForDao.findByProductOfferingPriceId(productOfferingPriceId);
+            } catch (EmptyResultDataAccessException ignored) {
+                log.warn("No existing ValidFor found for product offering price id: " + productOfferingPriceId);
+                existingValidFor = null;
+            }
             if (existingValidFor == null) {
-                validForDao.saveValidFor(validFor);
+                existingValidFor = validForDao.saveValidFor(validFor);
             } else {
-                validForDao.updateValidFor(validFor);
+                existingValidFor = validForDao.updateValidFor(validFor);
             }
         }
+        log.info("Updated ValidFor: " + existingValidFor);
+        return existingValidFor;
     }
 }

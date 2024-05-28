@@ -1,13 +1,13 @@
 
 package com.practice.backend.entity;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 public class ProductOfferingRelationship {
     private String id;
     private String name;
     private String role;
-    @SerializedName("@type")
+    @JsonAlias("@type")
     private String type;
 
     public ProductOfferingRelationship() {
@@ -52,4 +52,13 @@ public class ProductOfferingRelationship {
         this.type = type;
     }
 
+    @Override
+    public String toString() {
+        return "ProductOfferingRelationship{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", role='" + role + '\'' +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

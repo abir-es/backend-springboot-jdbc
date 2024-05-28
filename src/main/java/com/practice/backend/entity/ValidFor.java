@@ -36,7 +36,9 @@ public class ValidFor {
     @Override
     public String toString() {
         return "ValidFor{" +
-                "startDateTime='" + startDateTime + '\'' +
+                "id=" + id +
+                ", productOfferingPriceId='" + productOfferingPriceId + '\'' +
+                ", startDateTime='" + startDateTime + '\'' +
                 '}';
     }
 }

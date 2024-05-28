@@ -86,4 +86,19 @@ public class Price {
     public void setTaxIncludedAmount(TaxIncludedAmount taxIncludedAmount) {
         this.taxIncludedAmount = taxIncludedAmount;
     }
+
+    @Override
+    public String toString() {
+        return "Price{" +
+                "id=" + id +
+                ", productOfferingPriceId='" + productOfferingPriceId + '\'' +
+                ", percentage=" + percentage +
+                ", taxCategory='" + taxCategory + '\'' +
+                ", taxRate=" + taxRate +
+                ", unit='" + unit + '\'' +
+                ", value=" + value +
+                ", dutyFreeAmount=" + dutyFreeAmount +
+                ", taxIncludedAmount=" + taxIncludedAmount +
+                '}';
+    }
 }
