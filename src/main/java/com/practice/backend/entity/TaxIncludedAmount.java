@@ -45,7 +45,9 @@ public class TaxIncludedAmount {
     @Override
     public String toString() {
         return "TaxIncludedAmount{" +
-                "unit='" + unit + '\'' +
+                "id=" + id +
+                ", priceId=" + priceId +
+                ", unit='" + unit + '\'' +
                 ", value=" + value +
                 '}';
     }

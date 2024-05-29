@@ -134,18 +134,18 @@ public class Product {
     @Override
     public String toString() {
         return "Product{" +
-                "id:'" + id + '\'' +
-                ", name:'" + name + '\'' +
-                ", description:'" + description + '\'' +
-                ", isBundle:" + isBundle +
-                ", isSellable:" + isSellable +
-                ", lastUpdate:'" + lastUpdate + '\'' +
-                ", lifecycleStatus:'" + lifecycleStatus + '\'' +
-                ", totalCount:" + totalCount +
-                ", version:" + version +
-                ", channel:" + channel +
-                ", productOfferingPrice:" + productOfferingPrice +
-                ", productOfferingRelationship:" + productOfferingRelationship +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", isBundle=" + isBundle +
+                ", isSellable=" + isSellable +
+                ", lastUpdate='" + lastUpdate + '\'' +
+                ", lifecycleStatus='" + lifecycleStatus + '\'' +
+                ", totalCount=" + totalCount +
+                ", version=" + version +
+                ", channel=" + channel +
+                ", productOfferingPrice=" + productOfferingPrice +
+                ", productOfferingRelationship=" + productOfferingRelationship +
                 '}';
     }
 }

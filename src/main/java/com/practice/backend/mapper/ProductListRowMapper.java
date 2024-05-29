@@ -9,19 +9,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class ProductRowMapper implements ResultSetExtractor<Product> {
-
+public class ProductListRowMapper implements ResultSetExtractor<List<Product>> {
     @Override
-    public Product extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Product product = null;
+    public List<Product> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        Map<String, Product> productMap = new HashMap<>();
         Map<String, Channel> channelMap = new HashMap<>();
         Map<String, ProductOfferingPrice> popMap = new HashMap<>();
         Map<Integer, Price> priceMap = new HashMap<>();
         Map<String, ProductOfferingRelationship> porMap = new HashMap<>();
 
         while (rs.next()) {
+            String productId = rs.getString("id");
+            Product product = productMap.get(productId);
+
             if (product == null) {
                 product = new Product();
                 product.setId(rs.getString("id"));
@@ -33,6 +36,11 @@ public class ProductRowMapper implements ResultSetExtractor<Product> {
                 product.setLastUpdate(rs.getString("last_update"));
                 product.setTotalCount(rs.getInt("total_count"));
                 product.setIsBundle(rs.getBoolean("is_bundle"));
+
+                product.setChannel(new ArrayList<>());
+                product.setProductOfferingPrice(new ArrayList<>());
+                product.setProductOfferingRelationship(new ArrayList<>());
+                productMap.put(productId, product);
             }
 
             // Map channels
@@ -42,6 +50,7 @@ public class ProductRowMapper implements ResultSetExtractor<Product> {
                 channel.setId(channelId);
                 channel.setName(rs.getString("channel_name"));
                 channelMap.put(channelId, channel);
+                product.getChannel().add(channel);
             }
 
             // Map product offering prices
@@ -117,6 +126,7 @@ public class ProductRowMapper implements ResultSetExtractor<Product> {
                 }
 
                 popMap.put(popId, pop);
+                product.getProductOfferingPrice().add(pop);
             }
 
             // Map product offering relationships
@@ -128,15 +138,10 @@ public class ProductRowMapper implements ResultSetExtractor<Product> {
                 por.setRole(rs.getString("por_role"));
                 por.setType(rs.getString("por_type"));
                 porMap.put(porId, por);
+                product.getProductOfferingRelationship().add(por);
             }
         }
 
-        if (product != null) {
-            product.setChannel(new ArrayList<>(channelMap.values()));
-            product.setProductOfferingPrice(new ArrayList<>(popMap.values()));
-            product.setProductOfferingRelationship(new ArrayList<>(porMap.values()));
-        }
-
-        return product;
+        return new ArrayList<>(productMap.values());
     }
 }

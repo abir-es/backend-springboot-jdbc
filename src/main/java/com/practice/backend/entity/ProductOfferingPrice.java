@@ -1,8 +1,8 @@
 
 package com.practice.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.gson.annotations.SerializedName;
 
 public class ProductOfferingPrice {
     private String id;
@@ -17,7 +17,7 @@ public class ProductOfferingPrice {
     private int percentage;
     private String priceType;
     private String version;
-    @SerializedName("@type")
+    @JsonAlias("@type")
     private String type;
     private Price price;
     private UnitOfMeasure unitOfMeasure;
