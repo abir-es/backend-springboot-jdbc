@@ -9,6 +9,7 @@ This project is a Spring Boot application that uses JDBC to interact with a Post
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
+- [Swagger Documentation](#swagger-documentation)
 - [Project Structure](#project-structure)
 
 ## Requirements
@@ -132,6 +133,14 @@ Once the application is running, you can access the API at `http://localhost:909
 | POST   | /api/products                 | Create a new product                 |
 | PUT    | /api/products/{id}            | Update a product by ID               |
 | DELETE | /api/products/{id}            | Delete a product by ID               |
+
+
+## Swagger Documentation
+Swagger is integrated to provide API documentation.
+
+API Docs: `http://localhost:9090/v3/api-docs`
+
+Swagger UI: `http://localhost:9090/swagger-ui.html`
 
 ## Project Structure
 

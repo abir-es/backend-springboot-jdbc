@@ -1,10 +1,13 @@
 
 package com.practice.backend.entity;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 public class Product {
     private String id;
+    @NotBlank
     private String name;
     private String description;
     private Boolean isBundle;
