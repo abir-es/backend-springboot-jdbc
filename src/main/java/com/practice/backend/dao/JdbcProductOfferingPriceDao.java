@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,36 +39,6 @@ public class JdbcProductOfferingPriceDao implements ProductOfferingPriceDao {
 
         return productOfferingPrices;
     }
-
-    /*@Override
-    public void updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {
-        String upsertSql = "INSERT INTO public.product_offering_price (id, product_id, name, description, is_bundle, lifecycle_status, recurring_charge_period_length, price_type, version, last_update, percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, is_bundle = EXCLUDED.is_bundle, lifecycle_status = EXCLUDED.lifecycle_status, recurring_charge_period_length = EXCLUDED.recurring_charge_period_length, price_type = EXCLUDED.price_type, version = EXCLUDED.version, last_update = EXCLUDED.last_update, percentage = EXCLUDED.percentage";
-
-        // Perform batch UPSERT operation
-        jdbcTemplate.batchUpdate(upsertSql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ProductOfferingPrice price = productOfferingPrices.get(i);
-                ps.setString(1, price.getId());
-                ps.setString(2, productId);
-                ps.setString(3, price.getName());
-                ps.setString(4, price.getDescription());
-                ps.setBoolean(5, price.getIsBundle());
-                ps.setString(6, price.getLifecycleStatus());
-                ps.setInt(7, price.getRecurringChargePeriodLength());
-                ps.setString(8, price.getPriceType());
-                ps.setString(9, price.getVersion());
-                ps.setTimestamp(10, Timestamp.valueOf(price.getLastUpdate()));
-                ps.setInt(11, price.getPercentage());
-            }
-
-            @Override
-            public int getBatchSize() {
-                return productOfferingPrices.size();
-            }
-        });
-    }*/
 
     @Override
     public List<ProductOfferingPrice> updateProductOfferingPrices(String productId, List<ProductOfferingPrice> productOfferingPrices) {

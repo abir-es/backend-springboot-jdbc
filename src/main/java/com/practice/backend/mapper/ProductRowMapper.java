@@ -3,7 +3,6 @@ package com.practice.backend.mapper;
 import com.practice.backend.entity.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
