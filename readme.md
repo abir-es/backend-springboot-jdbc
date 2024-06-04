@@ -150,7 +150,7 @@ src/
 │   ├── java/com/practice/backend/
 │   │   ├── controller/         # REST controllers
 │   │   ├── dao/                # Data Access Objects
-│   │   ├── entity/             # JPA entities
+│   │   ├── entity/             # Entity models
 │   │   ├── service/            # Service layer
 │   │   └── BackendApplication.java  # Main Spring Boot application
 │   └── resources/
